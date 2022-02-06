@@ -1,0 +1,689 @@
+---
+title: Redux を完全に理解する
+description: 本記事では、Redux のフロー（流れ）の詳解、Redux が公開している example の一つ「todos」アプリ（簡易版）の作成を行います。
+date: '2021-12-24'
+---
+
+## 本記事の目標
+
+本記事の目標は、**Redux のフロー（流れ）を理解し、Redux が公開している example の一つ「todos」アプリ（簡易版）の動作原理を説明できるようになる** です。
+
+## 本記事の構成
+
+本記事は全部で 3 章から構成されています。以下が各章の内容です。
+
+**第 1 章**：Redux のフローを理解しよう（例え話やアニメーションを用いて詳しく説明していきます）  
+**第 2 章**：React & Redux を用いて Todos アプリを作ろう（第 1 章で学んだ Redux を使って Redux が公式サイトで公開しているアプリの簡易版を作成します）  
+**第 3 章**：まとめ（本記事の内容を総括します）
+
+## 本記事の対象者
+
+- React を触ったことのある方
+- Redux のことを聞いたことがある方
+- Redux を一度学んで挫折してしまった方
+- 絶対に Redux を理解したい方
+
+本記事は初学者の方を対象にしているため、同じことを繰り返し述べている箇所があります。学習内容を定着させるための繰り返し表現ですのでご了承ください。
+
+## 第１章　 Redux のフローを理解しよう
+
+本章では、Redux のフローを説明していきます。本章を読み終わったころには、Redux を使ったデータの更新方法が理解できているはずです。
+
+### Redux とは
+
+Redux を一言で表すと、**アプリケーションの状態を管理および更新するためのライブラリ**です。Redux を使うことで、アプリケーション全体の状態（**State** といいます）を**一元管理**（複数の種類のデータや情報を一か所にまとめ、出し入れしやすいような管理）することができます。
+
+では状態とはなんでしょうか。
+アプリケーションにおける状態の例として、ユーザのログイン状態・カート内商品の個数などがあげられます。みなさんが普段使っているアプリケーションでは様々な状態が管理されています。
+
+この状態を管理しやすくしてくれるのが、「Redux」というわけです。
+
+### Redux を使うと何が嬉しいのか
+
+さて、React で開発する全てのアプリケーションは、「**コンポーネント**」と呼ばれる部品で構成されています。コンポーネントを使うことで、UI を独立した再利用可能な部分に分解し、各部分を個別に考えることができます。下記はある画面の例です。
+
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/6057ef56-de0b-4e71-7b42-098863c1c532.png)
+まず、すべてのコンポーネント（部品）を囲む「App」コンポーネントがあります。
+そして、ナビゲーションバーには「Navbar」というコンポーネントの中に「NavItem」というコンポーネントが複数あります。
+また、ユーザのプロフィールを表示する「Profile」コンポーネントの中に、「Avatar」コンポーネント・「Name」コンポーネントがあり、記事などの投稿を表示するために、「Content」コンポーネントの中に、「Post」コンポーネントが複数あります。
+このように、React のアプリは「**コンポーネント**」と呼ばれる部品で構成されているのです。
+
+もう少し抽象的な話をしましょう。
+React アプリのコンポーネント間の関係を模式的に表すと下図のようになります。
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/d167b582-90e0-39b0-0dba-cdc94207ec61.png)
+図に示すように、コンポーネント間は Tree 構造で結ばれています。つまり、App コンポーネントという親は、A コンポーネントと B コンポーネントという子を持っています。さらに、A コンポーネントは C コンポーネントと D コンポーネントという子を持ち、C コンポーネントは G コンポーネントという子を持ちます。
+App コンポーネントからすると、G コンポーネントはひ孫になります。
+
+**では、この Tree 構造を形成しているコンポーネント間においてデータを受け渡すにはどうすればいいでしょうか。**
+
+今、D コンポーネントと I コンポーネントでユーザがログインしているか否かを知りたいという状況だとしましょう。ユーザのログイン状態によって表示を切り替えるというのはよくあることです。
+
+アプリケーションの状態は最上位に位置する App コンポーネントで保持されています。したがって、D コンポーネントと I コンポーネントに状態を受け渡すためには、バケツリレーのように他のコンポーネントを介してデータを渡す必要があります（下図）。これは非常に面倒です。コンポーネントが少ないうちはいいですが、コンポーネントが増えるにしたがって、このバケツリレーは大変になってしまいます。大変ということはバグの温床になってしまうということです。これはよろしくありません。
+
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/372978fb-4c54-b260-8647-dec26f7ebb34.png)
+
+そこで登場したのが **Redux** です。Redux を利用すればどのコンポーネントからも同じ方法で**共有したデータ（Store といいます）**にアクセスすることが可能になります。（下図）
+
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/e05467d1-6256-4f7b-4790-faeb4a1cb55f.png)
+
+このように Redux を使うことで、全てのコンポーネントは Store という場所から**ダイレクトに**状態を取得することができます。
+
+### Redux のフローのイメージ
+
+Redux はデータを一元管理することにより、全コンポーネントからデータをダイレクトに取得することを可能にします。このような大きなメリットを有する Redux ですが、デメリットもあります。それは、**Redux は少々難しい**ということです。 Redux を使ったデータ更新のフローを理解し、使えるようになるには、分かりやすい説明が不可欠です。本記事が分かりやすい説明の一つになることを祈っています（笑）。それでは、いよいよ Redux のフローを説明していきます。
+
+---
+
+突然ですが、ここからしばらくあなたは執事を持つほどのお坊ちゃまです。そして、今銀行にお金を預けようとしています。銀行の残高は簡単に見ることができますが、お金の預入・引き出しは簡単ではありません。（今やこれらは ATM やスマホなどで簡単に行うことができますが、この記事の中だけそのような文明はないものとします。）
+
+まず、あなたは銀行の口座の残高が 0 ドルであることを知ります。そこで、「10 ドル預金したい」というと、執事はその命を受けて
+
+```bash
+取引：預入
+金額：$10
+```
+
+という札（ふだ）を作ります。
+
+次に執事が口笛を吹くと、フクロウが飛んできて先ほど作った札を銀行まで持っていってくれます。
+
+銀行に札が届くと、銀行員は札の内容にしたがって 10 ドルを口座に預け入れます。すると、銀行の残高が 0 ドルから 10 ドルになります。
+
+こうして無事、あなたは銀行の残高を増やすことができました。
+
+上記を図解すると下記のようになります。
+
+![redux - HD 1080p (3).gif](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/2d0b8963-8356-a54c-d0df-68fdb0aa4287.gif)
+
+以上のようなフローが理解できましたら、後はフローの中で登場したものに**名前をつける**だけです。
+
+銀行は Redux の世界では「**Store**」と呼びます。この Store（銀行） に、残高が記録されています。残高は Redux の世界で「**State**」と呼びます。
+
+> 「State」とは「状態」を意味します。
+
+アプリケーションの中で Redux を使うと Store が、アプリケーションの状態（State）を管理します。
+
+執事が作った札のことを Redux の世界では、「Action」とよびます。「Action」は、データを**どのように**変更するのかという情報を持つオブジェクトです。そのため、Action には何をするのかという情報が必須となります。
+
+> オブジェクトというのは以下のようなものです。キーと値がセットになっていますね。
+
+> ```bash
+> {
+>   type: 'DEPOSIT',
+>   payload: 10
+> }
+> ```
+
+Action はオブジェクトという単なるデータですので、**Action が何かの処理を行うことはありません**。（これは重要です。）
+
+次に、データをどのように変更するかという情報を持つ Action を銀行に届けなくてはなりません。先ほどはフクロウに Action を運んでもらいました。このように Action を運ぶことを「**Dispatch**」とよびます。Dispatch は Action を銀行へ**送る**ので、単なる情報ではありません。Action というオブジェクトに対する操作ですので、Dispatch は**メソッド**となります。
+
+> メソッドとは「オブジェクトに対する操作」と定義されています。
+
+いよいよ銀行に Action が Dispatch されてきます。すると、銀行にいる銀行員が Action という札を受け取ります。Action には、データをどのように変更するかという情報が書かれているので、それをもとに現在の残高（State）を変更します。ここで、**必ず現在の残高（State）をもとに変更している**ことに注意してください。現在の State を参照しないと、最終的な残高を導くことができません。
+
+こうした流れの後、もう一度 Store の中の State を見ると、State が更新されているというわけです。
+
+この銀行にいる銀行員を Redux を「**Reducer**」と呼びます。Reducer は**唯一**銀行口座の残高（State）を変更できるすごい人です。つまり、**Reducer は State を変更できる唯一の存在** です。（非常に重要です）
+
+ではここで一旦整理しましょう。銀行にお金を預けるという例え話と Redux の対応関係は以下のようになります。
+
+| 例え話の世界                         | Redux の世界 |
+| ------------------------------------ | ------------ |
+| 銀行                                 | Store        |
+| 残高                                 | State        |
+| 執事が作った札                       | Action       |
+| フクロウが銀行に札を銀行に届けること | Dispatch     |
+| 銀行員                               | Reducer      |
+
+ちなみに、お坊ちゃんは銀行を利用する人ですので、IT の世界ではユーザとなります。ユーザという言葉は Redux では登場しませんので、除外しました。
+
+ここまでくればもう Redux の世界のことばで Redux のフローを説明することができるはずです！
+
+ユーザが何かしらの決定を下すと、
+**1**. Action が作成される。
+**2**. 作成された Action が Dispatch される。
+**3**. Reducer によって、Dispatch された Action と現在の State をもとに State を更新する。
+**4**. 画面が切り替わる
+という流れでデータが更新されます。
+
+いかがでしょうか。
+これで「Redux」のデータの流れの理解は完了です。
+
+この章の最後に、Redux の公式サイトに掲載されている Redux のフローを紹介します。やっていることは、全く同じです。Redux の図解のなかでこれが最もわかりやすいと思います。さすが公式ドキュメントですね。
+
+![reduxdataflowdiagram.gif](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/7dabcb44-1e4d-c91d-b1c9-94065fe9926e.gif)
+
+ここまで読んでいただければ、上記の図が何を意味しているかが理解できると思います。わからないようでしたら、もう一度この章を読んでみてください。必ず理解できるようになります。
+
+## 第 2 章 React & Redux を用いて Todo アプリを作ろう
+
+本章では、第 1 章で学んだ **Redux** と、JavaScript のライブラリである **React** を用いて Todo アプリを作成します。これから作成するアプリは、Redux が公開している「todos アプリ」の一部機能を削除したものになります。完全版のアプリの挙動およびコードを見たい方は下記のリンクよりご覧ください。
+
+https://codesandbox.io/s/1vwm785r44
+
+また、今回作成するアプリのコードは下記からご覧いただけます。
+
+https://github.com/FarStep131/todo_app_with_redux
+
+では、早速アプリを作成していきましょう。まずは、下記のコマンドを打ってください。
+
+```bash
+$ npx create-react-app todo_app_with_redux
+$ cd todo_app_with_redux
+$ npm run start
+```
+
+そうしましたら、最初に不要なファイルの削除を行います。
+
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/20108c05-29a8-4f8b-37f9-8e1ad1334f56.png)
+
+`App.css`、`App.test.js`、`index.css`、`logo.svg`、`reportWebVitals.js`、`setupTests.js`を削除します。
+
+それに伴い、`App.js`、`index.js`を次のように編集します。
+
+```javascript:App.js
+function App() {
+  return (
+    <div>
+      Hello World
+    </div>
+  );
+}
+
+export default App;
+```
+
+```javascript:index.js
+import React from 'react';
+import ReactDOM from 'react-dom';
+import App from './App';
+
+ReactDOM.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+  document.getElementById('root')
+);
+```
+
+`http://localhost:3000` にアクセスして「Hello World」が表示されれば OK です。
+
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/14c56735-9243-eb7a-27a2-cfedf0163684.png)
+
+では次に redux と react-redux をインストールしましょう。
+
+### redux と react-redux について
+
+redux ライブラリは、React アプリ以外でも使用できます。(例えば Vue、Angular、そしてバックエンドの Node/Express アプリでも動作します。)
+**re**dux という名前の先頭 2 文字につられて、react のライブラリと勘違いしがちですが、redux は React のことを全く知りません。
+したがって、React において redux を使用するときには、redux だけでなく react-redux をインストールする必要があります。
+
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/0c6a8ad3-0b99-4110-e615-06f58ef8d9b0.png)
+
+```bash
+$ npm i redux react-redux
+```
+
+インストールが完了したら、`src`ディレクトリに移動したのち下記コマンドを実行して、`components`フォルダを作成します。
+
+```bash
+$ mkdir components
+```
+
+そのまま、`src`ディレクトリ上で下記コマンドを実行して、`App.js` を `components`フォルダ内に移動させます。
+
+```bash
+$ mv App.js components
+```
+
+`App.js`の位置が変更されたので、`index.js`内の記述も更新します。
+
+```javascript
+- import App from './App';
++ import App from './components/App';
+```
+
+### Action の作成
+
+今回は、2 つの Action を作成します。このアプリ内では、どんなアクションを作成するのかが決まっているため、**あらかじめ** Action を作っておきます。
+
+```javascript:src/actions/index.js
+// Todoを追加するときに使うAction
+let nextTodoId = 0
+export const addTodo = text => ({
+  type: 'ADD_TODO',
+  // Todoを追加するたびにidは1ずつ増やすようにします。
+  id: nextTodoId++,
+  text
+})
+
+// Todoの完了・未完了を操作するときに使うAction
+export const toggleTodo = id => ({
+  type: 'TOGGLE_TODO',
+  id
+})
+```
+
+先ほどお伝えしたように、Action には、`type`というキーが必ず存在します。これは、「Action」は、データを**どのように**変更するのかという情報を持つオブジェクトだからです。そのため、Action には何をするのかという情報、つまり `type` が必須となります。
+
+これで、Action の定義は終了です。ユーザの操作によってこのいずれかの Action を Dispatch して Reducer に渡し、状態（=State）を変更します。
+
+### Reducer の作成
+
+では次に、Dispatch される Action の情報をもとにデータを変更する Reducer を作成していきます。
+
+```javascript:src/reducers/index.js
+// まず、Reducer を定義します。
+// 引数には、state の初期値と Dispatch される Action を設定します。
+const todosReducer = (state = [], action) => {
+  // そして、Action の type によってデータをどのように変更するのかを switch 文を用いて記述します。
+  switch (action.type) {
+    // Action の type が ADD_TODO のとき、
+    // 現在の todo に追加する形で state を更新します。
+    // completed はデフォルトではfalse（未完了）としておく。
+    case 'ADD_TODO':
+      return [
+        ...state,
+        {
+          id: action.id,
+          text: action.text,
+          completed: false
+        }
+      ]
+    // Action の type が TOGGLE_TODO のとき、
+    // ある一つの todo の completed を反転させて上書きします。
+    // ある一つの todo は id をもとにして探します。
+    case 'TOGGLE_TODO':
+      return state.map(todo =>
+        (todo.id === action.id)
+          ? {...todo, completed: !todo.completed}
+          : todo
+      )
+    default:
+      return state
+  }
+}
+
+export default todosReducer
+```
+
+上記のコードに登場する `...state` や `...todo` は、**スプレッド構文**と呼ばれています。スプレッド構文を用いることで、配列やオブジェクトを展開したり、配列同士・オブジェクト同士を結合することができます。（オブジェクト同士の結合の際、同じ名前のプロパティが存在していた場合は上書きが実行されます。）
+
+はい、これで Reducer の定義が完了しました。
+
+### Store の作成
+
+ではいよいよ、どのコンポーネントからもダイレクトにアクセス可能な Store を作成していきましょう。
+
+`index.js`を編集していきます。
+まず以下の 3 つを新たに import してください。
+
+```javascript:index.js
+// Storeを作成するもの
+import { createStore } from 'redux'
+// Storeを提供するもの
+import { Provider } from 'react-redux'
+// 定義したReducer
+import todosReducer from './reducers'
+```
+
+そして、「createStore」を使って store を作成します。
+
+```javascript:index.js
+// 引数には Reducer と、Redux DevTools を利用可能にするためのものを渡します。
+const store = createStore(
+  todosReducer,
+  window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+);
+```
+
+最後に、App コンポーネントを Provider で囲ってあげましょう。store を渡すことに注意してください。
+
+```javascript:index.js
+ReactDOM.render(
+  <Provider store={store}>
+    <App />
+  </Provider>,
+  document.getElementById('root')
+);
+```
+
+最終的に、`index.js`は以下のようになります。
+
+```javascript:index.js
+import React from 'react';
+import ReactDOM from 'react-dom';
+import App from './components/App';
+import { createStore } from 'redux'
+import { Provider } from 'react-redux'
+import todosReducer from './reducers';
+
+const store = createStore(
+  todosReducer,
+  window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+);
+
+ReactDOM.render(
+  <Provider store={store}>
+    <App />
+  </Provider>,
+  document.getElementById('root')
+);
+```
+
+### Redux Devtools について
+
+先ほど、Redux DevTools が登場しました。Redux DevTools とは Redux アプリの開発ツールの一つで、ブラウザの拡張機能から Redux の状態管理を可視化してくれます。Redux を使ってアプリ開発しているときに必須のデバックツールです。
+現在の State の状態、Action の実行履歴などを見ることができます。詳細は下記 URL からご覧ください。
+
+https://github.com/zalmoxisus/redux-devtools-extension
+
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/5e23e450-1cb7-dde5-8ade-9077e852edd3.png)
+
+それでは、
+
+```
+$ npm run start
+```
+
+を実行して、`http://localhost:3000`にアクセスしてみてください。デベロッパーツールを開き、Redux DevTools が起動していれば OK です。
+
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/81dba1f0-252d-d476-ddf4-f51b36c81726.png)
+
+### Todo 投稿機能の作成
+
+Action・Reducer・Store が作成し終わったので、次に Todo の投稿機能を作成していきます。
+
+Todo を投稿するときのフローは以下の通りです。
+**1.** ユーザが投稿ボタンを押す。
+**2.** addTodo というアクションを Dispatch の引数に渡す。
+**3.** Dispatch メソッドを実行する。
+**4.** Reducer に実行したい Action が伝わる。
+**5.** Store の中 State が更新される。
+**6.** State が更新されると再描画され、表示が切り替わる。
+
+では上記のフローを意識しながら、`AddTodo.js` を作成していきます。
+`src`フォルダの中に、`container`フォルダを作って、`container`フォルダ内に`AddTodo.js`を作成してください。
+
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/48690ffa-5246-8aa4-b890-ac3e5ae604ab.png)
+
+`AddTodo.js`の中身を書いていきます。
+
+```javascript:src/containers/AddTodo.js
+import React from 'react'
+// 「connect」は、component 内で dispatch を使えるようにするために必要です。
+import { connect } from 'react-redux'
+import { addTodo } from '../actions'
+
+const AddTodo = ({ dispatch }) => {
+  let input
+
+  return (
+    <div>
+      <form onSubmit={e => {
+        // ページのリロードを防ぎます。
+        e.preventDefault()
+        // 入力された文字列が空だった場合にはこれより先のコードは実行されません。
+        if (!input.value.trim()) {
+          return
+        }
+        // dispatch メソッド実行します。
+        dispatch(addTodo(input.value))
+        // 投稿ボタンを押した後に、テキストボックスの中身を空にします。
+        input.value = ''
+      }}>
+        <input ref={node => input = node} />
+        <button type="submit">
+          Add Todo
+        </button>
+      </form>
+    </div>
+  )
+}
+
+// ここで、connectを使用します。
+export default connect()(AddTodo)
+```
+
+---
+
+【補足：connect() について】
+コンポーネント内で Redux の Store や Dispatch を使用するためには、`connect()`を使って、コンポーネントと Redux を接続（connect）してあげる必要があります。後ほど説明しますが、TodoList コンポーネントでは、現在の状態（=State）を参照する・Dispatch メソッドを実行するということが必要になります。そこで、TodoList container を作成し、TodoList component 内で State の参照・dispatch メソッドの実行ができるようにします。
+
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/b14a59b1-0c0e-6b63-7e4a-a57b6bc5f7f2.png)
+
+`connect()` は難しいと思いますので、とりあえず「**コンポーネント内で State の参照・Dispatch メソッドの実行ができるようにするために connect() が必要**」ということだけ押さえておいてください。
+
+---
+
+`AddTodo.js`が完成したので、`App.js`に import していきましょう。
+
+```javascript:src/components/App.js
+import AddTodo from '../containers/AddTodo'
+
+function App() {
+  return (
+    <div>
+      // Appコンポーネント内にAddTodoコンポーネントを描画します。
+      <AddTodo />
+    </div>
+  );
+}
+
+export default App;
+```
+
+では、`http://localhost:3000`にアクセスしてみてください。テキストフィールドと「Add Todo」というボタンが出現すれば OK です。
+
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/a65e5604-652d-f76e-ff25-5810c5fcb44b.png)
+
+実は、もう Redux を使った Todo の投稿機能は完成しています。試しに、テキスフィールドに文字列を入力して、「Add Todo」ボタンを押してみてください。すると、State が更新されます。
+
+![画面収録 2021-12-19 14.33.54.gif](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/d829cf3e-01d2-a987-2f93-038a87411565.gif)
+
+テキストフィールドに「Hello」・「Apple」と入力すると、State は下記のようになります。
+id・text・completed というキーがありますね。
+completed は、デフォルトで false が入るようになっています。
+
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/ad0d5fc7-ff46-dbf7-564a-e48872ca3352.png)
+
+あとは、これらのデータを描画してあげるだけです。
+もう一息なので頑張りましょう！
+
+### Todo 一覧の表示
+
+最後に Todo の一覧表示を実装していきます。
+
+Todo を一覧表示させる際には、
+
+1. state からのデータ取得
+2. Todo の完了・未完了を更新するメソッド（=Dispatch）
+   が必要となります。
+
+先ほどの補足でも説明しましたが、コンポーネント内で state や Dispatch を使えるようにするために、`connect()` を利用しましょう。
+
+それでは、TodoList Container と TodoList Component を作成していきます。
+`containers`フォルダ内に`TodoList.js`を、`components`フォルダ内に`TodoList.js`をそれぞれ作成してください。
+
+まず、TodoList Container から記述していきます。
+
+```javascript:src/containers/TodoList.js
+import { connect } from 'react-redux'
+// Actionとして定義した、toggleTodoをimportします。
+import { toggleTodo } from '../actions'
+// stateとdispatchメソッドを渡す先であるコンポーネントをimportします。
+import TodoList from '../components/TodoList'
+
+// これは、stateをコンポーネントに渡すための準備です。
+// 「todos」という名前でstateを渡します。
+const mapStateToProps = state => ({
+  todos: state
+})
+
+// これは、Dispatchメソッドをコンポーネントに渡すための準備です。
+// toggleTodo という関数を渡します。
+// この関数は、Todo の id のみの情報を必要としています。
+const mapDispatchToProps = dispatch => ({
+  toggleTodo: id => dispatch(toggleTodo(id))
+})
+
+// 上で定義した todos と toggleTodo を TodoList コンポーネントに渡しています。
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(TodoList)
+```
+
+これで、TodoList コンポーネントに state と Dispatch メソッドを渡す準備が整いました。では、TodoList コンポーネントを作成していきます。
+
+```javascript:src/components/TodoList.js
+// 型定義機能を提供する PropTypes を import します。
+import PropTypes from 'prop-types'
+
+// TodoList Component には、TodoList Container で定義した
+// todos と toggleTodo が渡されています。
+const TodoList = ({ todos, toggleTodo }) => (
+  <ul>
+    {todos.map(todo =>
+      <li>{todo.text}</li>
+    )}
+  </ul>
+)
+
+// 下記では、TodoList Component に渡される引数（propsといいます）について
+// 「データ型」・「必須か否か」を定義しています。
+// データ型は記述の通りで、全ての値を必須としています。
+TodoList.propTypes = {
+  todos: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    completed: PropTypes.bool.isRequired,
+    text: PropTypes.string.isRequired
+  }).isRequired).isRequired,
+  toggleTodo: PropTypes.func.isRequired
+}
+
+export default TodoList
+```
+
+`TodoList.js` が完成したので、`App.js`に import していきましょう。
+
+```javascript:src/components/App.js
+import AddTodo from '../containers/AddTodo'
+// 下記を追加
+import TodoList from '../containers/TodoList'
+
+function App() {
+  return (
+    <div>
+      <AddTodo />
+      // 下記を追加
+      <TodoList />
+    </div>
+  );
+}
+
+export default App;
+```
+
+ここまで記述できましたら、`http://localhost:3000`にアクセスしてみてください。
+テキストフィールドに文字列を入力して「Add Todo」ボタンを押すと、Todo が表示されたら OK です。
+
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/9e4bd631-fb36-0673-8ca4-088eed788fd5.png)
+
+ついに最後のファイルとなりました。
+Todo Component を作成して Todo アプリが完成となります。
+`components`フォルダ内に`Todo.js`を作成してください。このファイルでは、Todo 一つ一つを描画する Todo Component を定義していきます。
+
+```javascript:src/components/Todo.js
+import PropTypes from 'prop-types'
+
+// Todo Component では props として、「onClick」・「completed」・「text」が渡されます。
+const Todo = ({ onClick, completed, text }) => (
+  <li
+    onClick={onClick}
+    // completed が True だった場合、取り消し線を適用します。
+    style={{
+      textDecoration: completed ? 'line-through' : 'none'
+    }}
+  >
+    {text}
+  </li>
+)
+
+// TodoList Component と同様にデータ型の定義をしました。
+Todo.propTypes = {
+  onClick: PropTypes.func.isRequired,
+  completed: PropTypes.bool.isRequired,
+  text: PropTypes.string.isRequired
+}
+
+export default Todo
+```
+
+`Todo.js` が完成したので、`components/TodoList.js`に import しましょう。
+
+```javascript:src/components/TodoList.js
+import PropTypes from 'prop-types'
+// 下記を追加
+import Todo from './Todo'
+
+const TodoList = ({ todos, toggleTodo }) => (
+  <ul>
+    {todos.map(todo =>
+      // ここで Todo コンポーネントを描画します。
+      // onClick には、toggleTodo（引数は todo の id）を渡します。
+      <Todo
+        key={todo.id}
+        {...todo}
+        onClick={() => toggleTodo(todo.id)}
+      />
+    )}
+  </ul>
+)
+
+TodoList.propTypes = {
+  todos: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    completed: PropTypes.bool.isRequired,
+    text: PropTypes.string.isRequired
+  }).isRequired).isRequired,
+  toggleTodo: PropTypes.func.isRequired
+}
+
+export default TodoList
+```
+
+ここまで記述できましたら、`http://localhost:3000`にアクセスしてみてください。
+テキストフィールドに文字列を入力して「Add Todo」ボタンを押すと Todo が表示され、さらに Todo をクリックすると取り消し線が出現しましたら OK です。
+
+![画面収録 2021-12-19 17.41.51.gif](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/b0a0f019-c4c4-7548-31dd-efcd9cede8ff.gif)
+
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/fed67723-f6a9-458f-f3a0-b9c5fd2cf7fe.png)
+
+Todo をクリックすると completed の値が true や false に切り替わります。
+
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/7e9052b1-a626-d49c-5b48-a54ca9489e58.png)
+
+また、どんな Action が Dispatch されたのかが時系列順で並んでいます。
+
+これでめでたく Todo アプリが完成となります。🎉
+
+## 第 3 章 まとめ
+
+お疲れ様でした。最後にもう一度、Redux のフローを復習しておきます。
+
+ユーザが何かしらの決定を下すと、  
+**1**. Action が作成される。  
+**2**. 作成された Action が Dispatch される。  
+**3**. Reducer によって、Dispatch された Action と現在の State をもとに State を更新する。  
+**4**. 画面が切り替わる  
+という流れでデータが更新されます。
+
+Action は単なる情報であり、State を更新するのはあくまでも Reducer であることが非常に重要です。
+
+もしもフローが分からなくなった場合には、お坊ちゃまになって銀行にお金を預けてみてください。
+
+最後まで読んでいただき有難うございます。
+ここまで読んで頂ければ、Redux の基礎は完成しています。
+もしも誤植等ありましたらコメントしていただけると幸いです。
