@@ -104,7 +104,7 @@ COPY . .
 # 実行ファイルの作成
 # -o はアウトプットの名前を指定。
 # ビルドするファイル名を指定（今回は main.go）。
-RUN go build -o main main.go
+RUN go build -o main /app/main.go
 
 # Run stage
 # Goで作成したバイナリは Alpine Linux 上で動く。
@@ -155,6 +155,14 @@ EXPOSE 8080
 # バイナリファイルの実行
 CMD [ "/app/main" ]
 ```
+
+【Multi-stage build を使わなかった場合】
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/fbd33d80-d91c-e0dc-7acf-5b64edfeb1b4.png)
+
+【Multi-stage build を使った場合】
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/513cacb5-d9ec-edce-0f4d-7b3a4b06d751.png)
+
+今回、Multi-stage build を使うと image size が 20 分の 1 程度になりました。
 
 ## 第 3 章　まとめ
 
