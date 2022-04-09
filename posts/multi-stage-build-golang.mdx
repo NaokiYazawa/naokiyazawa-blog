@@ -50,8 +50,10 @@ version: "3.8"
 
 services:
   postgres:
+    # コンテナ名を指定
     container_name: postgres
     image: postgres:12.8
+    # OSの起動時にコンテナを起動させる
     restart: always
     env_file:
       - .env
@@ -64,6 +66,7 @@ services:
     volumes:
       - db:/var/lib/postgresql/data
   api:
+    # コンテナ名を指定
     container_name: api
     build:
       # 「.」は本docker-compose.ymlがあるディレクトリ（現在のディレクトリ）を指す
