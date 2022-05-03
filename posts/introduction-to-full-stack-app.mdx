@@ -1,0 +1,581 @@
+---
+title: FullStack App 入門
+description: 本記事では、Next.js & TypeScript & Prisma & NextAuth & TailwindCSS & Vercel & Heroku  を使ってブックマークアプリを作成します。
+date: '2022-06-10'
+---
+
+## 本記事の目標
+
+本記事の目標は、**Next.js & TypeScript & Prisma & NextAuth & TailwindCSS & Vercel & Heroku を使ってブックマークアプリを作成する** です。  
+また、ESLint・Prettier・Husky を使ったコードの品質管理も行います。
+
+## 本記事の対象者
+
+- フロントエンドエンジニアに興味がある方
+- Next.js を触ったことのある方
+- TypeScript を触ったことのある方
+- Prisma のことを聞いたことがある方
+- 様々な技術を使ってアプリケーションを作ってみたい方
+- フロントエンドの技術を使ってポートフォリオを作成したい方
+
+技術についてはできる限り丁寧に説明していく所存ですが、Next.js や TypeScript を触ったことがあるとスムーズに開発が進むと思います。
+
+## 本記事の構成
+
+本記事は全部で 10 章から構成されています。以下が各章の内容です。
+
+**第 1 章**：作成するアプリの概要を掴もう  
+**第 2 章**：アプリを作成するにあたって使用する言語・ツールの紹介  
+**第 3 章**：ESLint・Prettier・Husky を用いてプロジェクトのセットアップしよう
+
+## 第１章　 作成するアプリの概要を掴もう
+
+本章では、本記事で作成するアプリケーションをご紹介します。
+あらかじめ、どんなアプリを作るのかというゴールを把握しておいた方がいいですよね。
+
+本記事では、「**認証機能付きブックマークアプリ**」を作成します。  
+あらかじめ登録されている記事に対して、ブックマークを追加・削除することが可能です。  
+認証には、GitHub のアカウントを使用します。
+
+アプリの主な画面は下記の通りです。
+
+【トップページ】
+
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/726d53d3-b71b-ed32-ae9d-6abb57775d14.png)
+
+【ログインページ】
+
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/e335b82e-1fc1-caa7-6260-f3bc5a720067.png)
+
+【記事一覧画面】
+
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/304c6e2f-74b2-b248-2fbb-8fffea1d8bff.png)
+
+【記事詳細画面（ブックマーク前）】
+
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/87d57b66-b034-0ddc-fd5d-4d230398191b.png)
+
+【記事詳細画面（ブックマーク後）】
+
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/46a524c4-a5f6-bd54-2479-943836c78059.png)
+
+【ユーザのマイページ】
+
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/da82afd3-0d56-8f45-bc4a-cb72241bdf14.png)
+
+上記のようなアプリを作っていきます。  
+デザインには TailwindCSS、デプロイには、Vercel & Heroku を使います。
+
+## 第 2 章　 アプリを作成するにあたって使用する言語・ツールの紹介
+
+本章では、アプリを作成するにあたって使用する言語・ツールの紹介を行います。
+
+### 1. Next.js
+
+<img
+  src="https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/4a4c5edb-be86-296a-53a3-d39db67b8978.png"
+  width="50px"
+/>
+
+Next.js とは、React をベースに作られたフレームワークです。  
+サーバ側でのレンダリング機能を備えているため、高速で、SEO にも強いフレームワークです。
+
+> [Pre-rendering and Data Fetching](https://nextjs.org/learn/basics/data-fetching/pre-rendering)  
+> [SSG と SSR で理解する Next.js のページレンダリング](https://zenn.dev/luvmini511/articles/1523113e0dec58)
+
+### 2. TypeScript
+
+<img
+  src="https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/21967685-e369-ae2e-eb2a-d41fb5452929.png"
+  width="50px"
+/>
+
+TypeScript は JavaScript を拡張して作られたオープンソースのプログラミング言語です。  
+JavaScript との大きな違いは、JavaScript が動的型付けであるのに対して TypeScript は静的型付けであるという点です。
+
+### 3. TailwindCSS
+
+<img
+  src="https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/4575d6fb-5229-f68e-2aa7-21f8a46a6cb4.png"
+  width="50px"
+/>
+
+Tailwind CSS とは、Utility First（ユーティリティファースト）をコンセプトに設計された CSS フレームワークです。  
+Utility First とは、CSS は使わずに Tailwind CSS が提供しているクラスのみを使用してスタイリングする考え方のことです。
+
+### 4. Prisma
+
+<img
+  src="https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/b70c8062-e64a-3376-3fde-7c743cc60a3d.png"
+  width="50px"
+/>
+
+Prisma（Next-generation Node.js and TypeScript ORM）とは、データベースへのアクセスを容易にするツールです。  
+型安全性やエディタでの入力補完があるといった利点を有しています。
+
+### 5. NextAuth.js
+
+<img
+  src="https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/b95b5413-5ec7-235e-551c-48f7edda3775.png"
+  width="50px"
+/>
+
+NextAuth.js とは Next.js に認証機能を簡単に実装できるライブラリのことです。  
+メールアドレス認証に加えて、Google・Twitter・Facebook・GitHub といったサービスの OAuth 認証を組み込むことが可能です。
+
+### 6. Docker
+
+<img
+  src="https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/1bfb3b62-b4c0-29c6-3334-8fd9f5bc833f.png"
+  width="50px"
+/>
+
+Docker とは、コンテナタイプの仮想環境の中で、アプリケーションの作成配布や実行したりするためのプラットフォームです。  
+軽量なため効率的に作業ができ、コード化されたファイルで同じ環境が作れ、配布がしやすく、スクラップ＆ビルドが楽にできます。
+
+### 7. Vercel
+
+<img
+  src="https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/33c40dbf-f988-0ff4-19e4-0b8ebd40a409.png"
+  width="50px"
+/>
+
+Next.js を開発している Vercel Inc. が提供しているサーバーレスプラットフォームです。  
+これを利用して手軽に Next.js アプリケーションをデプロイできます。
+
+### 8. Heroku
+
+<img
+  src="https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/7ae06105-3b2f-b4a0-5cea-99d8cd59b64b.png"
+  width="50px"
+/>
+
+Heroku とは、Web アプリケーションの構築から保守、スケールの拡張などの運用作業までができるクラウドサービスです。
+
+### 9. ESLint
+
+<img
+  src="https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/4a1067d1-3da6-1ede-216e-88c79d17c3be.png"
+  width="50px"
+/>
+
+ESLint とは、Node.js で書かれた JavaScript 専用の linter です。  
+ESLint を使うことによって明らかなバグを見つけたり、独自のコーディング規約を設定してコードのスタイルを統一することができます。
+
+### 10. Prettier
+
+<img
+  src="https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/9bfa3d3f-384a-4f7c-c25e-d3650b579da9.png"
+  width="50px"
+/>
+
+Prettier とは、決めたルールに従い、ソースコードを適切に**整形**してくれるツールです。  
+ESLint と役割を混同しがちですが、ESLint の役割はコードの構文チェックであり、Prettier の役割はコードの整形になります。
+
+### 11. Husky
+
+<img
+  src="https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/6269b5b6-9e7d-2c2f-14e6-7f3ca4f42583.png"
+  width="50px"
+/>
+
+Husky とは、Git Commit する前、Git Push する前などにスクリプトを実行することができるツールです。  
+Husky を使うことによって、ESLint と Prettier を自動で動かすことが出来ます。
+
+## 第 3 章　 ESLint・Prettier・Husky を用いてプロジェクトのセットアップしよう
+
+本章では、ESLint・Prettier・Husky を用いてプロジェクトのセットアップを行います。  
+いよいよ、アプリケーションの作成がスタートします！
+
+### 1. Visual Studio Code プラグインのインストール
+
+まずは、ESLint と Prettier のプラグインをインストールしましょう。  
+Visual Studio Code を開き「command+shift+x」で拡張機能を検索してください。  
+以下 2 つのプラグインをインストールすれば OK です。
+
+【ESLint】
+
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/e3d3cde2-8212-6830-3819-bc83b7691a1a.png)
+
+【Prettier - Code formatter】
+
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/7ac00aa0-ddf1-c331-7ee7-ddfc708d48a0.png)
+
+### 2. プロジェクトの作成
+
+さて、下記のコマンドを実行して、Next.js のアプリケーションを作成しましょう。  
+今回のアプリケーションの名前は「bookmark」とします。  
+**--example with-tailwindcss** とすることで、TypeScript & tailwindCSS の環境構築が完成します。
+
+```bash
+$ npx create-next-app bookmark --example with-tailwindcss
+```
+
+```bash
+$ cd bookmark
+```
+
+### 3. ESLint の設定
+
+次に、**eslint** をインストールしましょう。
+
+```bash
+$ npm i eslint --save-dev
+```
+
+無事インストールできましたら、下記コマンドを実行して ESLint の設定を行ってください。
+
+```bash
+$ npx eslint --init
+```
+
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/bd479ab3-6e70-140f-9ed5-d4254f27f17a.png)
+上記が完了すると、**.eslintrc.js** が生成され下記の内容が記述されているはずです。
+
+```javascript:.eslintrc.js
+module.exports = {
+  env: {
+    browser: true,
+    es2021: true
+  },
+  extends: [
+    'plugin:react/recommended',
+    'standard'
+  ],
+  parser: '@typescript-eslint/parser',
+  parserOptions: {
+    ecmaFeatures: {
+      jsx: true
+    },
+    ecmaVersion: 'latest',
+    sourceType: 'module'
+  },
+  plugins: [
+    'react',
+    '@typescript-eslint'
+  ],
+  rules: {
+  }
+}
+```
+
+早速ですが、react の version を指定しておきましょう。
+
+```javascript:.eslintrc.js
+module.exports = {
+  env: {
+    browser: true,
+    es2021: true,
+  },
+  extends: ['plugin:react/recommended', 'standard'],
+  parser: '@typescript-eslint/parser',
+  parserOptions: {
+    ecmaFeatures: {
+      jsx: true,
+    },
+    ecmaVersion: 'latest',
+    sourceType: 'module',
+  },
+  plugins: ['react', '@typescript-eslint'],
+  rules: {},
+  // 下記を追加
+  settings: {
+    react: {
+      version: 'latest'
+    }
+  }
+};
+```
+
+そして、ESLint のコーディング規約を適用しないファイル・フォルダを設定しておきましょう。  
+**.eslintignore** を作成して下記を記述してください。
+
+```bash
+$ touch .eslintignore
+```
+
+```json:.eslintignore
+.next
+next-env.d.ts
+node_modules
+yarn.lock
+package-lock.json
+public
+```
+
+上記の設定はあくまでも例ですので、ご自身のプロジェクトに合わせて変更してください。
+
+### 4. prettier の設定
+
+次に prettier の設定を行っていきます。  
+下記コマンドを実行してください。
+
+```bash
+$ npm i --save-dev prettier
+```
+
+これで prettier がインストールされました。
+次に、下記コマンドも実行してください。
+
+```bash
+$ npm i --save-dev eslint-config-prettier
+```
+
+【eslint-config-prettier をインストールする理由】  
+eslint などのリンターにはコーディング規約だけでなく、コードをフォーマットする機能も含まれています。  
+これらフォーマットの機能を無効化して機能の競合を防ぎ、prettier にフォーマットを任せるように設定を行うため eslint-config-prettier を導入する必要があります。
+
+eslint-config-prettier をインストール後に、**.eslintrc.js** の extends を編集してください。
+
+```javascript:.eslintrc.js
+module.exports = {
+  env: {
+    browser: true,
+    es2021: true,
+  },
+  // 下記の extends に「'prettier'」を追加（必ず最後に追加してください）
+  extends: ['plugin:react/recommended', 'standard', 'prettier'],
+  parser: '@typescript-eslint/parser',
+  parserOptions: {
+    ecmaFeatures: {
+      jsx: true,
+    },
+    ecmaVersion: 'latest',
+    sourceType: 'module',
+  },
+  plugins: ['react', '@typescript-eslint'],
+  rules: {},
+  settings: {
+    react: {
+      version: 'latest',
+    },
+  },
+};
+```
+
+それでは、prettier の設定を行っていきます。  
+**.prettierrc** を作成してください。
+
+```bash
+$ touch .prettierrc
+```
+
+下記のように、prettier の設定を記述します。
+
+```javascript:.prettierrc
+{
+  "endOfLine": "lf",
+  "printWidth": 80,
+  "tabWidth": 2,
+  "trailingComma": "es5",
+  "singleQuote": true,
+  "jsxSingleQuote": true,
+  "semi": true
+}
+```
+
+上記の設定はあくまでも例ですので、ご自身のプロジェクトに合わせて変更していただいて構いません。
+
+そして、ESLint と同様に Prettier のコードフォーマットを適用しないファイル・フォルダを設定しておきましょう。  
+**.prettierignore** を作成して下記を記述してください。
+
+```bash
+$ touch .prettierignore
+```
+
+```json:.prettierignore
+.next
+next-env.d.ts
+node_modules
+yarn.lock
+package-lock.json
+public
+```
+
+最後に、Visual Studio Code 上で保存時に prettier のコードフォーマットを発動させるための設定を行います。
+
+「command + ,」で Settings を開き、「Default Formatter」と検索してください。  
+そして、下記のように **Prettier - Code formatter** を選択してください。
+
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/aa9496c4-a3de-e0af-a858-f1573b969fe5.png)
+
+次に、「Format on Save」と検索してください。  
+そして、下記のように **Format On Save** にチェックを入れてください。
+
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/be8fc362-2f65-d767-4eb7-5e2a275381a0.png)
+
+これで、ファイル保存時に prettier によってコードが自動的にフォーマットされます。
+
+また、**.vscode** ディレクトリ内に **settings.json** を作成し、今設定した事項を記述しましょう。  
+こうすることで、GitHub などから clone したときに **settings.json** の設定が適用されるようになります。
+
+```bash
+$ mkdir .vscode
+$ touch .vscode/settings.json
+```
+
+```json:settings.json
+{
+  "editor.formatOnPaste": true,
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true,
+    "source.fixAll.format": true
+  }
+}
+```
+
+### 5. ESLint の rules の変更
+
+試しに、**index.tsx** の保存を実行してみましょう。  
+prettier のコードフォーマットが実行され、ダブルクォーテーションがシングルクォーテーションに修正されています。（便利！）  
+しかし、下記のような ESLint のエラーが表示されると思います。
+
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/dfeb5ae2-261d-08d6-2745-816043c72c80.png)
+
+上記のエラーは React を import すれば解消します。
+しかし、NEXT.js を使用している場合、ファイルの先頭で React をインポートする必要はないので、今回は ESLint の rules の方を変更しましょう。
+
+```javascript:.eslintrc.js
+module.exports = {
+  env: {
+    browser: true,
+    es2021: true,
+  },
+  extends: ['plugin:react/recommended', 'standard', 'prettier'],
+  parser: '@typescript-eslint/parser',
+  parserOptions: {
+    ecmaFeatures: {
+      jsx: true,
+    },
+    ecmaVersion: 'latest',
+    sourceType: 'module',
+  },
+  plugins: ['react', '@typescript-eslint'],
+  rules: {
+    // 下記を追加
+    'react/react-in-jsx-scope': 'off',
+  },
+  settings: {
+    react: {
+      version: 'latest',
+    },
+  },
+};
+```
+
+これで、index.tsx のエラーが解消されるはずです。
+
+### 6. Husky の設定
+
+最後に、Git Commit 時に ESLint と Prettier による静的解析を走らせるために Husky の設定を行っていきます。
+
+はじめに下記コマンドを実行してください。
+
+```bash
+$ npx husky-init
+```
+
+すると下記のようなログが表示されます。  
+これで、コミット時に **.husky/pre-commit** というファイルが実行されるようになりました。
+
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/c4bd952e-f01f-514a-c3ff-e693d186d0f9.png)
+
+それでは、「コミット時に ESLint と Prettier による静的解析を走らせる」という設定を **pre-commit** ファイルに記述していきます。
+
+```bash:pre-commit
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# bash echo color
+RED='\033[1;31m'
+GREEN='\033[1;32m'
+BLUE='\033[1;36m'
+BOLD='\033[1;37m'
+NC='\033[0m'
+
+echo "\n 🚧🏗️  ${BOLD}Checking format, lint and types in your project before committing${NC}"
+
+# Check Prettier standards
+npm run check-format ||
+(
+    echo "\n ❌🟨 Prettier Check ${RED}Failed${NC}. 🟨❌\n Run ${BLUE}npm run format${NC}, add changes and try commit again.\n";
+    false;
+)
+
+# Check ESLint Standards
+npm run check-lint ||
+(
+    echo "\n ❌🟪 ESLint Check ${RED}Failed${NC}. 🟪❌\n Make the required changes listed above, add changes and try to commit again.\n"
+    false;
+)
+
+# Check tsconfig standards
+npm run check-types ||
+(
+    echo "\n ❌🟦 Type check ${RED}Failed${NC}. 🟦❌\n Make the changes required above.\n"
+    false;
+)
+
+# If everything passes... Now we can build
+echo "🔥🚀 ${BOLD}All passed... Now we can build.${NC} 🚀🔥"
+
+npm run build ||
+(
+    echo "\n ❌🟩 Next build ${RED}Failed${NC}. 🟩❌\n View the errors above to see why.\n"
+    false;
+)
+
+# If everything passes... Now we can commit
+echo "✅✅ ${GREEN}Build is completed... I am committing this now.${NC} ✅✅\n"
+```
+
+最後に
+
+- **npm run check-format**：Prettier で定義したフォーマットの検証
+- **npm run check-lint**：ESLint で定義したフォーマットの検証
+- **npm run check-types**：TypeScript の型検証
+
+を **package.json** に定義しましょう。
+
+```bash
+"scripts": {
+  "dev": "next dev",
+  "build": "next build",
+  "start": "next start",
+  "lint": "next lint",
+  "prepare": "husky install",
+  "check-types": "tsc --pretty --noEmit",
+  "check-format": "prettier --check .",
+  "check-lint": "eslint . --ext ts --ext tsx --ext js",
+  "format": "prettier --write .",
+  "test-all": "npm run check-format && npm run check-lint && npm run check-types"
+},
+```
+
+最終的なフォルダ構成は下記のようになります。
+
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/847778d5-b598-fc8f-da4d-c7816f6dea4d.png)
+
+### 7. コミットの実行
+
+それでは、本章の最後にコミットを実行してみましょう。  
+まずは、Prettier によるコードフォーマットの実行をします。
+
+```bash
+$ npm run format
+```
+
+これで、Prettier によるフォーマットが完了しました。  
+後は、add して commit すれば OK です。
+
+```bash
+$ git add .
+```
+
+```bash
+$ git commit -m "setup ESLint & Prettier & Husky"
+```
+
+お疲れ様でした。これで、本章は終了です。
