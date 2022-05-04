@@ -26,7 +26,10 @@ date: '2022-06-10'
 
 **第 1 章**：作成するアプリの概要を掴もう  
 **第 2 章**：アプリを作成するにあたって使用する言語・ツールの紹介  
-**第 3 章**：ESLint・Prettier・Husky を用いてプロジェクトのセットアップしよう
+**第 3 章**：ESLint・Prettier・Husky を用いてプロジェクトのセットアップしよう  
+**第 4 章**：Docker を使ってデータベースを構築しよう  
+**第 5 章**：Prisma を使ってスキーマを設定しよう  
+**第 6 章**：NextAuth.js を使って認証機能を作成しよう
 
 ## 第１章　 作成するアプリの概要を掴もう
 
@@ -435,7 +438,7 @@ prettier のコードフォーマットが実行され、ダブルクォーテ�
 ![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/dfeb5ae2-261d-08d6-2745-816043c72c80.png)
 
 上記のエラーは React を import すれば解消します。
-しかし、NEXT.js を使用している場合、ファイルの先頭で React をインポートする必要はないので、今回は ESLint の rules の方を変更しましょう。
+しかし、Next.js を使用している場合、ファイルの先頭で React をインポートする必要はないので、今回は ESLint の rules の方を変更しましょう。
 
 ```javascript:.eslintrc.js
 module.exports = {
@@ -560,7 +563,7 @@ echo "✅✅ ${GREEN}Build is completed... I am committing this now.${NC} ✅✅
 
 ### 7. コミットの実行
 
-それでは、本章の最後にコミットを実行してみましょう。  
+それでは、本章の最後にコミットしておきましょう。  
 まずは、Prettier によるコードフォーマットの実行をします。
 
 ```bash
@@ -579,3 +582,110 @@ $ git commit -m "setup ESLint & Prettier & Husky"
 ```
 
 お疲れ様でした。これで、本章は終了です。
+
+## 第 4 章　 Docker を使ってデータベースを構築しよう
+
+本章では、 Docker を使ってデータベースを構築していきます。  
+今回は、Docker イメージのビルドや各コンテナの起動・停止などをより簡単に行える Docker Compose を使います。
+
+まずは、docker と docker-compose がインストールされていることを確認してください。
+
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/812ad374-1843-b6af-9661-90513cb8c5b7.png)
+
+それでは、ルートディレクトリに `docker-compose.yml` を作成して下記のコードを記述しましょう。  
+それぞれのコードの意味はコメントとして記載しました。
+
+```yaml:docker-compose.yml
+# docker-composeで使用するバージョンを定義しています。2022/5 現在、3.9が最新です。
+version: '3.9'
+# サービス (コンテナ) を定義します。
+services:
+  # 今回は postgres がサービスとして定義しました。
+  postgres:
+    # Docker Image は postgres:12-alpine を使います。postgres:12-alpine は postgres:12 と比較して、イメージサイズが小さくなっています。
+    image: postgres:12-alpine
+    # コンテナの名前を指定します。
+    container_name: postgres
+    # 環境変数を設定します。
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=secret
+      - POSTGRES_DB=mydb
+    # データの永続化
+    volumes:
+      # postgresディレクトリを/var/lib/postgresql/dataにマウントする
+      - postgres:/var/lib/postgresql/data
+    # ポートの指定（HOST:CONTAINER）
+    ports:
+      - 5432:5432
+# データの永続化
+volumes:
+  postgres:
+```
+
+`docker-compose.yml` ファイルの記載が完了しましたら、下記コマンドを実行して postgres コンテナを作成します。
+
+```bash
+$ docker-compose up
+```
+
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/043bc4a4-800e-e5f1-c7ae-e11d45dd850f.png)
+
+上記のように出力されていれば、問題ありません。
+念のため、コンテナが立ち上がっているか確認しましょう。
+
+```bash
+$ docker ps
+```
+
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/af8b8bcf-3df1-37a8-63a9-ed5f739c1775.png)
+
+STATUS が UP 担っていればコンテナが正常に立ち上がっています。  
+IMAGE、PORTS、NAMES には、先ほど docker-compose.yml で指定した値が反映されていますね。
+
+ところで、docker-compose.yml の環境変数において、POSTGRES_DB を mydb と設定しました。
+mydb というデータベースが作成されているかを確認してみます。
+
+下記コマンドを実行して、postgres コンテナの中に入りましょう。
+
+```bash
+$ docker container exec -it postgres bash
+```
+
+コンテナ内にログイン後、下記コマンドを実行してデータベース一覧を表示します。
+
+```bash
+$ psql -l
+```
+
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2279509/b2226435-a45c-5837-6afe-fcb3656eae88.png)
+
+mydb というデータベースがあります。
+
+これで、docker によるデータベースの構築が完了です。
+
+コミットしておきましょう。
+
+```bash
+$ git add .
+```
+
+```bash
+$ git commit -m "database construction by docker"
+```
+
+## 第 5 章　 NextAuth.js を使って認証機能を作成しよう
+
+まずは、**next-auth** をインストールします。
+
+```bash
+$ npm i next-auth
+```
+
+まずは、**pages/api/auth/[...nextauth].ts** を作成して下記のコードを記述してください。
+
+```typescript:[...nextauth].ts
+
+```
+
+https://next-auth.js.org/getting-started/example
