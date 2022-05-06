@@ -25,7 +25,7 @@ export const Index = ({ posts }: IndexProps): JSX.Element => {
           </p>
           <div className="pt-6">
             <a
-              href="#"
+              href="https://nervous-kepler-2fc28d.netlify.app"
               target="blank"
               className="bg-brand-button rounded-full inline-flex justify-center items-center space-x-2"
             >
